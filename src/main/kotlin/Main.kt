@@ -1,3 +1,4 @@
+import apply.applyPending
 import db.allTables
 import ingest.ingestFile
 import org.jetbrains.exposed.v1.core.DatabaseConfig
@@ -25,6 +26,9 @@ fun main(args: Array<String>) {
 
         val ingest = ingestFile(db, file, batchSize)
         println("Stage 1: ingested ${ingest.newLines} new lines from $file (resumed after line ${ingest.resumedAfterLine})")
+
+        val applied = applyPending(db, batchSize)
+        println("Stage 2: applied ${applied.applied} events, rejected ${applied.rejected}")
     }
 }
 

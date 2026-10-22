@@ -152,5 +152,7 @@ README: how to run, the table design, every rule above stated explicitly, and th
 - ord-1391 has no seq 1 (starts with OrderCreated at seq 2) → all its events stay PENDING.
 - Line 1210 is broken JSON claiming ord-1012 seq 4; a valid seq 4 exists. MALFORMED, no conflict.
 - Line 902 (no type) and line 114 (no orderId) → MALFORMED; neither blocks an order in this file.
-- `order_paid` and `OrderRefunded` → UNKNOWN_TYPE.
+- `order_paid` (ord-1033 seq 9) and `OrderRefunded` (ord-1020 seq 9) sit behind gaps, so they stay PENDING
+  and never reach the state machine; they would be UNKNOWN_TYPE if reached.
+- ord-1386..1389 are missing seq 2, so their later events stay PENDING. 15 events wait in total.
 - One ItemAdded with qty -2 (line 1441) → INVALID_PAYLOAD.
