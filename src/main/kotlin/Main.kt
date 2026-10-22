@@ -1,4 +1,5 @@
 import db.allTables
+import ingest.ingestFile
 import org.jetbrains.exposed.v1.core.DatabaseConfig
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
@@ -12,7 +13,9 @@ import java.sql.SQLException
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
-    val path = args.firstOrNull() ?: "data/events.jsonl"
+    val file = File(args.firstOrNull() ?: "data/events.jsonl")
+    if (!file.isFile) fatal("File not found: $file", EXIT_USAGE)
+    val batchSize = env("BATCH_SIZE", "500").toInt()
 
     val db = connectPostgres()
     val redis = connectRedis()
@@ -20,8 +23,8 @@ fun main(args: Array<String>) {
     redis.use {
         transaction(db) { SchemaUtils.create(*allTables) }
 
-        val lines = File(path).readLines()
-        println("Read ${lines.size} lines from $path")
+        val ingest = ingestFile(db, file, batchSize)
+        println("Stage 1: ingested ${ingest.newLines} new lines from $file (resumed after line ${ingest.resumedAfterLine})")
     }
 }
 
@@ -66,6 +69,7 @@ private fun connectRedis(): Jedis {
 
 private fun env(name: String, default: String): String = System.getenv(name) ?: default
 
+private const val EXIT_USAGE = 1
 private const val EXIT_POSTGRES = 2
 private const val EXIT_REDIS = 3
 

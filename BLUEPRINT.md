@@ -15,8 +15,9 @@ note any difference in the README.
   (JsonNode ↔ String). JSONB normalizes key order and whitespace; the exact original line stays in
   ingested_lines.raw.
 - docker-compose.yml: postgres:16, redis:7
-- Config via env vars with defaults: PG_URL, PG_USER, PG_PASSWORD, REDIS_HOST, REDIS_PORT
-- Run: `order-event-processor <file.jsonl>`
+- Config via env vars with defaults: PG_URL, PG_USER, PG_PASSWORD, REDIS_HOST, REDIS_PORT, BATCH_SIZE (500;
+  lines per stage 1 transaction and orders per stage 2 transaction; small values make kill tests meaningful)
+- Run: `order-event-processor [file.jsonl]` (default data/events.jsonl). File not found → exit code 1.
 
 ## Startup
 1. Connect to Postgres (run `SELECT 1`) and Redis (`PING`). On failure exit with a clear message:
