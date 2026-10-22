@@ -29,9 +29,10 @@ data class ApplyResult(val applied: Int, val rejected: Int)
 
 /**
  * Stage 2: PENDING events → orders + redis_outbox. Each chunk of orders is one transaction:
- * event states, order rows and outbox rows commit together or not at all.
+ * event states, order rows and outbox rows commit together or not at all. [afterCommit] runs after
+ * each chunk's commit (used to publish the outbox to Redis).
  */
-fun applyPending(db: Database, chunkSize: Int): ApplyResult {
+fun applyPending(db: Database, chunkSize: Int, afterCommit: () -> Unit = {}): ApplyResult {
     val orderIds = transaction(db) {
         Events.select(Events.orderId)
             .where { Events.state eq EventState.PENDING }
@@ -43,6 +44,7 @@ fun applyPending(db: Database, chunkSize: Int): ApplyResult {
     var rejected = 0
     for (chunk in orderIds.chunked(chunkSize)) {
         val outcomes = transaction(db) { applyChunk(chunk) }.flatMap { it.processed }.map { it.outcome }
+        afterCommit()
         applied += outcomes.count { it is Outcome.Applied }
         rejected += outcomes.count { it is Outcome.Rejected }
     }

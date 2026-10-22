@@ -142,7 +142,7 @@ pending events, it returns the events to process in order and the ones that keep
 
 ## Structure
 Main.kt (CLI, wiring, summary) · input/ (JSONL line parser) · domain/ (state machine, types) ·
-ingest/ (stage 1) · apply/ (stage 2) · db/ (Exposed tables, queries) · redis/ (outbox publisher).
+ingest/ (stage 1) · apply/ (stage 2) · db/ (Exposed tables, queries) · outbox/ (Redis outbox publisher).
 README: how to run, the table design, every rule above stated explicitly, and the data notes below.
 
 ## Data notes (events.jsonl, expected outcomes)
