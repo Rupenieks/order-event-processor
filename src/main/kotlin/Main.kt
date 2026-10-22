@@ -33,6 +33,8 @@ fun main(args: Array<String>) {
 
         val applied = applyPending(db, batchSize) { flushOutbox(db, redis) }
         println("Stage 2: applied ${applied.applied} events, rejected ${applied.rejected}")
+
+        loadSummary(db).print()
     }
 }
 
