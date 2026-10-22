@@ -68,7 +68,7 @@ note any difference in the README.
   SEQUENCE_CONFLICT (0 if none). Load it for all orders in a chunk with one grouped query.
 - For each order with PENDING events, in sequence order, starting at last processed + 1: apply the event
   whose sequence is exactly next, repeat; stop at the first gap. Events after a gap stay PENDING (= waiting).
-- Each next event goes through a pure state machine `apply(state: OrderState?, event): Apply | Reject`.
+- Each next event goes through a pure state machine `applyEvent(state: OrderState?, event): Applied | Rejected`.
     - APPLIED: new state.
     - REJECTED: reject_kind + reason; still advances the sequence.
 - Process 500 orders per transaction. In the same transaction: update events, upsert orders
@@ -107,7 +107,6 @@ strings → INVALID_PAYLOAD); qty ≥ 1, prices/amounts ≥ 0; required strings 
 - Whitespace-only strings count as empty.
 - The payload must be a JSON object for every type (`{}` is fine for OrderCancelled); `reason`, if present,
   must be a string.
-- The function is named `applyEvent` (Kotlin already has a built-in `apply`).
 - The sequencer throws if given a pending event at or before last processed, or two pending events with the
   same sequence; either means a bug in stage 1 or 2.
 
