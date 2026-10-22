@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: orders
       POSTGRES_DB: orders
     ports:
-      - "5433:5432"
+      - "5432:5432"
 
   redis:
     image: redis:7
