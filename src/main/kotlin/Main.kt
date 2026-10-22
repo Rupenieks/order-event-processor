@@ -1,10 +1,13 @@
+import db.allTables
+import org.jetbrains.exposed.v1.core.DatabaseConfig
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import redis.clients.jedis.DefaultJedisClientConfig
 import redis.clients.jedis.HostAndPort
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.exceptions.JedisException
 import java.io.File
-import java.sql.Connection
-import java.sql.DriverManager
 import java.sql.SQLException
 import kotlin.system.exitProcess
 
@@ -14,21 +17,33 @@ fun main(args: Array<String>) {
     val db = connectPostgres()
     val redis = connectRedis()
 
-    db.use {
-        redis.use {
-            val lines = File(path).readLines()
-            println("Read ${lines.size} lines from $path")
-        }
+    redis.use {
+        transaction(db) { SchemaUtils.create(*allTables) }
+
+        val lines = File(path).readLines()
+        println("Read ${lines.size} lines from $path")
     }
 }
 
-private fun connectPostgres(): Connection {
+private fun connectPostgres(): Database {
     val url = env("PG_URL", "jdbc:postgresql://localhost:5432/orders?connectTimeout=5")
+    val db = Database.connect(
+        url,
+        driver = "org.postgresql.Driver",
+        user = env("PG_USER", "orders"),
+        password = env("PG_PASSWORD", "orders"),
+        // Exposed retries a failed transaction 3 times by default; fail fast instead
+        databaseConfig = DatabaseConfig { defaultMaxAttempts = 1 },
+    )
     return try {
-        DriverManager.getConnection(url, env("PG_USER", "orders"), env("PG_PASSWORD", "orders"))
-            .also { println("Connected to PostgreSQL at $url") }
+        // Database.connect is lazy, so run a query to verify the connection
+        transaction(db) { exec("SELECT 1") }
+        println("Connected to PostgreSQL at $url")
+        db
     } catch (e: SQLException) {
-        fatal("Could not connect to PostgreSQL at $url: ${e.message}", EXIT_POSTGRES)
+        // Exposed wraps the driver's exception; the innermost one has the readable message
+        val cause = generateSequence<Throwable>(e) { it.cause }.last()
+        fatal("Could not connect to PostgreSQL at $url: ${cause.message}", EXIT_POSTGRES)
     }
 }
 

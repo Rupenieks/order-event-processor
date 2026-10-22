@@ -7,7 +7,9 @@ note any difference in the README.
 
 ## Stack
 - JDK 21, Kotlin 2.3.21, Gradle 9.3 (wrapper), application plugin
-- Exposed 1.6.0 (exposed-core, exposed-jdbc, exposed-json; DSL only, no DAO; packages org.jetbrains.exposed.v1.*)
+- Exposed 1.6.0 (exposed-core, exposed-jdbc, exposed-json, exposed-java-time for TIMESTAMPTZ; DSL only, no DAO;
+  packages org.jetbrains.exposed.v1.*). Enum columns (status, state, reject_kind) are VARCHAR via enumerationByName.
+- slf4j-simple at WARN level, so library warnings (Exposed, Jedis) are visible and nothing else.
 - PostgreSQL JDBC driver, Jedis (Redis), Jackson 2.x (JSON), JUnit 5. No kotlinx-serialization plugin.
 - events.payload is JSONB via exposed-json's `jsonb(name, serialize, deserialize)` with Jackson
   (JsonNode ↔ String). JSONB normalizes key order and whitespace; the exact original line stays in
