@@ -94,6 +94,15 @@ Payloads (extra fields are ignored):
 Payload validation is strict, no auto-correction: money and quantities must be JSON integers (floats or
 strings → INVALID_PAYLOAD); qty ≥ 1, prices/amounts ≥ 0; required strings non-empty; currency other than
 "EUR" or missing → INVALID_PAYLOAD. Money is Long cents with overflow-checked arithmetic. Ignore occurredAt.
+- Check order: UNKNOWN_TYPE → INVALID_PAYLOAD → INVALID_TRANSITION → AMOUNT_MISMATCH (a bad payload on a
+  shipped order is INVALID_PAYLOAD).
+- A total that overflows Long → INVALID_PAYLOAD.
+- Whitespace-only strings count as empty.
+- The payload must be a JSON object for every type (`{}` is fine for OrderCancelled); `reason`, if present,
+  must be a string.
+- The function is named `applyEvent` (Kotlin already has a built-in `apply`).
+- The sequencer throws if given a pending event at or before last processed, or two pending events with the
+  same sequence; either means a bug in stage 1 or 2.
 
 ## Redis
 - Key `order:{orderId}:status` = status. Write only after the Postgres commit.
