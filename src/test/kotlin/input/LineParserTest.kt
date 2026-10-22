@@ -30,7 +30,7 @@ class LineParserTest {
         assertIs<ParsedLine.Valid>(parsed)
         val event = parsed.event
         assertEquals(listOf("e7f3c1", "ord-1042", "OrderPaid"), listOf(event.eventId, event.orderId, event.type))
-        assertEquals(3, event.sequence)
+        assertEquals(3L, event.sequence)
         assertEquals(12990, event.payload.get("amountCents").intValue())
     }
 
@@ -60,7 +60,7 @@ class LineParserTest {
         assertMalformed("""{"eventId":42,"orderId":"ord-1","sequence":1,"type":"OrderPaid"}""", "eventId must be")
         assertMalformed("""{"eventId":"e1","orderId":" ","sequence":1,"type":"OrderPaid"}""", "orderId must be")
         assertMalformed("""{"eventId":"e1","orderId":"ord-1","type":"OrderPaid"}""", "sequence is missing")
-        for (sequence in listOf("0", "-1", "1.0", "\"1\"", "true", "2147483648")) {
+        for (sequence in listOf("0", "-1", "1.0", "\"1\"", "true", "9223372036854775808")) {
             assertMalformed(envelope(sequence), "sequence must be")
         }
     }

@@ -26,11 +26,11 @@ note any difference in the README.
 - ingested_lines: file_hash TEXT, line_no BIGINT, raw TEXT, status TEXT (OK | MALFORMED | DUPLICATE),
   reason TEXT NULL, event_id TEXT NULL; PRIMARY KEY (file_hash, line_no). No surrogate id: a serial id
   burns values on rollback, so a killed-and-resumed run would differ from a clean one.
-- events: event_id TEXT PK, order_id TEXT, sequence INT, type TEXT, payload JSONB, line_no BIGINT,
+- events: event_id TEXT PK, order_id TEXT, sequence BIGINT, type TEXT, payload JSONB, line_no BIGINT,
   state TEXT (PENDING | APPLIED | REJECTED), reject_kind TEXT NULL, reason TEXT NULL;
   partial UNIQUE (order_id, sequence) WHERE reject_kind IS DISTINCT FROM 'SEQUENCE_CONFLICT'
   (the database enforces one real event per sequence; also serves the stage 2 lookups)
-- orders: order_id PK, status TEXT, total_cents BIGINT, last_sequence INT, updated_at TIMESTAMPTZ.
+- orders: order_id PK, status TEXT, total_cents BIGINT, last_sequence BIGINT, updated_at TIMESTAMPTZ.
   status and total_cents come from applied events only (a rejected event never changes them).
   last_sequence = last processed sequence, rejected events included: after a rejected seq 2,
   the row reads CREATED / last_sequence 2, and seq 3 is next.
@@ -42,7 +42,11 @@ note any difference in the README.
 - Read line by line; ignore blank lines. Batches of 500 lines, one transaction per batch.
 - Per line:
     - Invalid JSON, not an object, or missing/invalid eventId (non-empty string), orderId (non-empty string),
-      sequence (JSON integer ≥ 1), type (non-empty string) → ingested_lines MALFORMED + reason. Nothing in events.
+      sequence (JSON integer ≥ 1, fits Long), type (non-empty string) → ingested_lines MALFORMED + reason.
+      Nothing in events. Whitespace-only strings count as empty.
+    - JSON is parsed strictly: duplicate keys and anything after the first JSON value → MALFORMED.
+    - Only the envelope makes a line malformed. A missing payload is not malformed: the event is stored with a
+      JSON null payload and stage 2 rejects it as INVALID_PAYLOAD, so it still uses up its sequence.
       No attempt to salvage fields from broken lines. Consequence: a malformed line never fills a sequence,
       so if it was mid-order, the order's later events stay PENDING.
     - eventId already in events → ingested_lines DUPLICATE, event_id set. (Same eventId = duplicate, even if

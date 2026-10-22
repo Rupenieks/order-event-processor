@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode
 data class Event(
     val eventId: String,
     val orderId: String,
-    val sequence: Int,
+    val sequence: Long,
     val type: String,
     val payload: JsonNode,
 )

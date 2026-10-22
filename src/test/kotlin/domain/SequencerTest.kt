@@ -19,8 +19,8 @@ class SequencerTest {
         val progress = processOrder(null, 0, events)
 
         assertEquals(OrderState(SHIPPED, 1250), progress.state)
-        assertEquals(4, progress.lastProcessed)
-        assertEquals(listOf(1, 2, 3, 4), progress.processed.map { it.event.sequence })
+        assertEquals(4L, progress.lastProcessed)
+        assertEquals(listOf(1L, 2L, 3L, 4L), progress.processed.map { it.event.sequence })
         assertTrue(progress.processed.all { it.outcome is Outcome.Applied })
     }
 
@@ -29,14 +29,14 @@ class SequencerTest {
         val first = processOrder(null, 0, listOf(itemAdded(3), created(1)))
 
         assertEquals(OrderState(CREATED, 1000), first.state)
-        assertEquals(1, first.lastProcessed)
-        assertEquals(listOf(3), first.waiting.map { it.sequence })
+        assertEquals(1L, first.lastProcessed)
+        assertEquals(listOf(3L), first.waiting.map { it.sequence })
 
         val second = processOrder(first.state, first.lastProcessed, first.waiting + itemAdded(2))
 
         assertEquals(OrderState(CREATED, 1500), second.state)
-        assertEquals(3, second.lastProcessed)
-        assertEquals(listOf(2, 3), second.processed.map { it.event.sequence })
+        assertEquals(3L, second.lastProcessed)
+        assertEquals(listOf(2L, 3L), second.processed.map { it.event.sequence })
         assertTrue(second.waiting.isEmpty())
     }
 
@@ -45,7 +45,7 @@ class SequencerTest {
         val progress = processOrder(null, 0, listOf(created(1), paid(2, 999), paid(3, 1000)))
 
         assertEquals(OrderState(PAID, 1000), progress.state)
-        assertEquals(3, progress.lastProcessed)
+        assertEquals(3L, progress.lastProcessed)
         assertEquals(listOf(null, RejectKind.AMOUNT_MISMATCH, null), progress.kinds())
     }
 
@@ -56,7 +56,7 @@ class SequencerTest {
         val progress = processOrder(null, 0, listOf(badCreated, itemAdded(2), paid(3, 250)))
 
         assertNull(progress.state)
-        assertEquals(3, progress.lastProcessed)
+        assertEquals(3L, progress.lastProcessed)
         assertEquals(
             listOf(RejectKind.INVALID_PAYLOAD, RejectKind.INVALID_TRANSITION, RejectKind.INVALID_TRANSITION),
             progress.kinds(),
@@ -68,13 +68,13 @@ class SequencerTest {
         val first = processOrder(null, 0, listOf(created(2)))
 
         assertTrue(first.processed.isEmpty())
-        assertEquals(0, first.lastProcessed)
-        assertEquals(listOf(2), first.waiting.map { it.sequence })
+        assertEquals(0L, first.lastProcessed)
+        assertEquals(listOf(2L), first.waiting.map { it.sequence })
 
         val second = processOrder(first.state, first.lastProcessed, first.waiting + itemAdded(1))
 
         assertNull(second.state)
-        assertEquals(2, second.lastProcessed)
+        assertEquals(2L, second.lastProcessed)
         assertEquals(listOf(RejectKind.INVALID_TRANSITION, RejectKind.INVALID_TRANSITION), second.kinds())
     }
 

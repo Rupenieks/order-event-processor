@@ -55,10 +55,10 @@ private fun JsonNode.string(name: String): String {
     return node.textValue()
 }
 
-private fun JsonNode.sequence(): Int {
+private fun JsonNode.sequence(): Long {
     val node = get("sequence") ?: throw MalformedLine("sequence is missing")
-    if (!node.isIntegralNumber || !node.canConvertToInt() || node.intValue() < 1) {
+    if (!node.isIntegralNumber || !node.canConvertToLong() || node.longValue() < 1) {
         throw MalformedLine("sequence must be an integer >= 1, was $node")
     }
-    return node.intValue()
+    return node.longValue()
 }

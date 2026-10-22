@@ -23,10 +23,10 @@ fun applyEvent(state: OrderState?, event: Event): Outcome {
     }
 }
 
-private fun transition(state: OrderState?, sequence: Int, event: OrderEvent): Outcome = when (event) {
+private fun transition(state: OrderState?, sequence: Long, event: OrderEvent): Outcome = when (event) {
     is OrderEvent.Created -> when {
         state != null -> invalid("order already exists")
-        sequence != 1 -> invalid("OrderCreated must have sequence 1, had $sequence")
+        sequence != 1L -> invalid("OrderCreated must have sequence 1, had $sequence")
         else -> applied(CREATED, event.items.fold(0L) { sum, item -> Math.addExact(sum, item.totalCents()) })
     }
 
